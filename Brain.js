@@ -1,3 +1,57 @@
+const startRecording = state => () => {
+  return {
+    ...state,
+    recording: true,
+    loop: {
+      recordingStartTimestamp: Date.now(),
+      events: []
+    }
+  }
+};
+
+const stopLoop = state => () => {
+  const loops = state.loops.map((loop) => {
+    clearInterval(loop.intervalId);
+
+    loop.timeoutIds.forEach((timeoutId) => {
+      clearTimeout(timeoutId);
+    });
+
+    return {
+      ...loop,
+      intervalId: null,
+      timeoutIds: []
+    }
+  });
+
+  return {
+    ...state,
+    loops
+  }
+};
+
+const recordMessage = state => msg => {
+  if (!state.recording) {
+    return state
+  }
+
+  const loop = {
+    ...state.loop,
+    events: [
+      ...state.loop.events,
+      {
+        msg,
+        t: Date.now()
+      }
+    ]
+  };
+
+  return {
+    ...state,
+    loop
+  }
+};
+
 class Brain {
   constructor(output) {
     this.output = output;
@@ -12,14 +66,10 @@ class Brain {
       loopTimeouts: []
     };
 
+    const bindAction = action => (...args) => this.state = action(this.state)(...args);
+
     this.actions = {
-      startRecording: () => {
-        this.state.recording = true;
-        this.state.loop = {
-          recordingStartTimestamp: Date.now(),
-          events: []
-        };
-      },
+      startRecording: bindAction(startRecording),
       stopRecording: () => {
         this.state.recording = false;
         const {loop} = this.state;
@@ -40,23 +90,7 @@ class Brain {
 
         this.actions.startLoop()
       },
-      stopLoop: () => {
-        const loops = this.state.loops.map((loop) => {
-          clearInterval(loop.intervalId);
-
-          loop.timeoutIds.forEach((timeoutId) => {
-            clearTimeout(timeoutId);
-          });
-
-          return {
-            ...loop,
-            intervalId: null,
-            timeoutIds: []
-          }
-        });
-
-        this.state.loops = loops;
-      },
+      stopLoop: bindAction(stopLoop),
       startLoop: () => {
         const replay = (msgEvents) =>
           msgEvents.map(
@@ -93,22 +127,7 @@ class Brain {
 
         this.state.loops = loops;
       },
-      recordMessage: (msg) => {
-        if (!this.state.recording) {
-          return
-        }
-
-        this.state.loop = {
-          ...this.state.loop,
-          events: [
-            ...this.state.loop.events,
-            {
-              msg,
-              t: Date.now()
-            }
-          ]
-        }
-      },
+      recordMessage: bindAction(recordMessage)
     };
   };
 }
