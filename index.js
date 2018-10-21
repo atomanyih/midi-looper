@@ -23,7 +23,7 @@ const state = {
   recording: false,
   recordingStartTimestamp: null,
   recordingStopTimestamp: null,
-  loop: [],
+  loop: null,
   loopInterval: null,
   loopTimeouts: []
 };
@@ -32,12 +32,17 @@ const state = {
 const Actions = {
   startRecording() {
     state.recording = true;
-    state.recordingStartTimestamp = Date.now();
-    state.loop = [];
+    state.loop = {
+      recordingStartTimestamp: Date.now(),
+      events: []
+    };
   },
   stopRecording() {
     state.recording = false;
-    state.recordingStopTimestamp = Date.now();
+    state.loop = {
+      ...state.loop,
+      recordingStopTimestamp: Date.now()
+    };
 
     Actions.startLoop()
   },
@@ -51,28 +56,33 @@ const Actions = {
     state.loopTimeouts = [];
   },
   startLoop() {
-    const relativeEvents = state.loop.map(({t, msg}) => (
+    const loop = state.loop;
+    
+    const relativeEvents = loop.events.map(({t, msg}) => (
       {
-        t: t - state.recordingStartTimestamp,
+        t: t - loop.recordingStartTimestamp,
         msg
       }
     ));
 
     state.loopTimeouts = replay(relativeEvents);
 
-    const loopDuration = state.recordingStopTimestamp - state.recordingStartTimestamp;
+    const loopDuration = loop.recordingStopTimestamp - loop.recordingStartTimestamp;
     state.loopInterval = setInterval(() => {
       state.loopTimeouts = replay(relativeEvents);
     }, loopDuration);
   },
   recordMessage(msg) {
-    state.loop = [
+    state.loop = {
       ...state.loop,
-      {
-        msg,
-        t: Date.now()
-      }
-    ]
+      events: [
+        ...state.loop.events,
+        {
+          msg,
+          t: Date.now()
+        }
+      ]
+    }
   },
 };
 
@@ -89,11 +99,10 @@ EasyMidi.getInputs().forEach(inputName => {
     console.log(`${inputName} - ${msgToString(msg)}`);
 
     if (note === RECORDING_NOTE && channel === RECORDING_CHANNEL) {
-
       if (velocity === 0) {
         Actions.stopRecording();
-
       }
+
       if (velocity === 127) {
         Actions.startRecording();
       }
@@ -113,6 +122,3 @@ EasyMidi.getInputs().forEach(inputName => {
     }
   });
 });
-
-
-// setInterval()
