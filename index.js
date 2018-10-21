@@ -6,8 +6,9 @@ const STOP_NOTE = 23;
 const STOP_CHANNEL = 0;
 const START_NOTE = 20;
 const START_CHANNEL = 0;
+const OUTPUT_NAME = 'MIDILOOP';
 
-const output = new EasyMidi.Output('test output', true);
+const output = new EasyMidi.Output(OUTPUT_NAME, true);
 
 const replay = (msgEvents) =>
   msgEvents.map(
@@ -98,33 +99,40 @@ const msgToString = (msg) =>
     .join(', ');
 
 EasyMidi.getOutputs().map(output => console.log(output));
+
+function handleMessage(msg) {
+  const {note, channel, velocity} = msg;
+
+  if (note === RECORDING_NOTE && channel === RECORDING_CHANNEL) {
+    if (velocity === 0) {
+      Actions.stopRecording();
+    }
+
+    if (velocity === 127) {
+      Actions.startRecording();
+    }
+  } else if (note === STOP_NOTE && channel === STOP_CHANNEL) {
+    if (velocity === 127) {
+      Actions.stopLoop();
+    }
+  } else if (note === START_NOTE && channel === START_CHANNEL) {
+    if (velocity === 127) {
+      Actions.stopLoop();
+      Actions.startLoop();
+    }
+  } else {
+    if (state.recording) {
+      Actions.recordMessage(msg);
+    }
+  }
+}
+
 EasyMidi.getInputs().forEach(inputName => {
   const input = new EasyMidi.Input(inputName);
   input.on('message', msg => {
-    const {note, channel, velocity} = msg;
     console.log(`${inputName} - ${msgToString(msg)}`);
-
-    if (note === RECORDING_NOTE && channel === RECORDING_CHANNEL) {
-      if (velocity === 0) {
-        Actions.stopRecording();
-      }
-
-      if (velocity === 127) {
-        Actions.startRecording();
-      }
-    } else if (note === STOP_NOTE && channel === STOP_CHANNEL) {
-      if (velocity === 127) {
-        Actions.stopLoop();
-      }
-    } else if (note === START_NOTE && channel === START_CHANNEL) {
-      if (velocity === 127) {
-        Actions.stopLoop();
-        Actions.startLoop();
-      }
-    } else {
-      if (state.recording) {
-        Actions.recordMessage(msg);
-      }
+    if(inputName !== OUTPUT_NAME) {
+      handleMessage(msg);
     }
   });
 });
