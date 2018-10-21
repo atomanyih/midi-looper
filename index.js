@@ -24,6 +24,7 @@ const state = {
   recordingStartTimestamp: null,
   recordingStopTimestamp: null,
   loop: null,
+  loops: [],
   loopInterval: null,
   loopTimeouts: []
 };
@@ -39,10 +40,15 @@ const Actions = {
   },
   stopRecording() {
     state.recording = false;
-    state.loop = {
+    const loop = {
       ...state.loop,
       recordingStopTimestamp: Date.now()
     };
+
+    state.loops = [
+      // ...state.loops,
+      loop
+    ];
 
     Actions.startLoop()
   },
@@ -56,8 +62,8 @@ const Actions = {
     state.loopTimeouts = [];
   },
   startLoop() {
-    const loop = state.loop;
-    
+    const loop = state.loops[0];
+
     const relativeEvents = loop.events.map(({t, msg}) => (
       {
         t: t - loop.recordingStartTimestamp,
