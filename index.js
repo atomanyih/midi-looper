@@ -60,24 +60,47 @@ const Actions = {
     Actions.startLoop()
   },
   stopLoop() {
-    clearInterval(state.loopInterval);
+    const loops = state.loops.map((loop) => {
+      clearInterval(loop.intervalId);
 
-    state.loopTimeouts.forEach((timeoutId) => {
-      clearTimeout(timeoutId);
+      loop.timeoutIds.forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+
+      return {
+        ...loop,
+        intervalId: null,
+        timeoutIds: []
+      }
     });
-    state.loopInterval = null;
-    state.loopTimeouts = [];
+
+    state.loops = loops;
   },
   startLoop() {
-    const loop = state.loops[0];
+    const loops = state.loops.map((loop) => {
+      const {events, duration} = loop;
+      const timeoutIds = replay(events);
 
-    const {events, duration} = loop;
+      const intervalId = setInterval(
+        () => {
+          state.loops = [
+            {
+              ...state.loops[0],
+              timeoutIds: replay(events)
+            }
+          ];
+        },
+        duration
+      );
 
-    state.loopTimeouts = replay(events);
+      return {
+        ...loop,
+        timeoutIds,
+        intervalId
+      }
+    });
 
-    state.loopInterval = setInterval(() => {
-      state.loopTimeouts = replay(events);
-    }, duration);
+    state.loops = loops;
   },
   recordMessage(msg) {
     state.loop = {
