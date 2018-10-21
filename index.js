@@ -41,14 +41,20 @@ const Actions = {
   },
   stopRecording() {
     state.recording = false;
-    const loop = {
-      ...state.loop,
-      recordingStopTimestamp: Date.now()
-    };
+    const {loop} = state;
+
+    const events = loop.events.map(({t, msg}) => (
+      {
+        t: t - loop.recordingStartTimestamp,
+        msg
+      }
+    ));
 
     state.loops = [
-      // ...state.loops,
-      loop
+      {
+        duration: Date.now() - loop.recordingStartTimestamp,
+        events
+      }
     ];
 
     Actions.startLoop()
@@ -65,19 +71,13 @@ const Actions = {
   startLoop() {
     const loop = state.loops[0];
 
-    const relativeEvents = loop.events.map(({t, msg}) => (
-      {
-        t: t - loop.recordingStartTimestamp,
-        msg
-      }
-    ));
+    const {events, duration} = loop;
 
-    state.loopTimeouts = replay(relativeEvents);
+    state.loopTimeouts = replay(events);
 
-    const loopDuration = loop.recordingStopTimestamp - loop.recordingStartTimestamp;
     state.loopInterval = setInterval(() => {
-      state.loopTimeouts = replay(relativeEvents);
-    }, loopDuration);
+      state.loopTimeouts = replay(events);
+    }, duration);
   },
   recordMessage(msg) {
     state.loop = {
@@ -131,7 +131,7 @@ EasyMidi.getInputs().forEach(inputName => {
   const input = new EasyMidi.Input(inputName);
   input.on('message', msg => {
     console.log(`${inputName} - ${msgToString(msg)}`);
-    if(inputName !== OUTPUT_NAME) {
+    if (inputName !== OUTPUT_NAME) {
       handleMessage(msg);
     }
   });
