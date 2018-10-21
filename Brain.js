@@ -52,6 +52,76 @@ const recordMessage = state => msg => {
   }
 };
 
+const playLoop = (state, {output}) => (loopIndex) => {
+  const loop = state.loops[loopIndex];
+
+  const replay = (msgEvents) =>
+    msgEvents.map(
+      ({t, msg: {_type, ...msgParams}}) => setTimeout(
+        () => {
+          output.send(_type, msgParams);
+        },
+        t
+      )
+    );
+
+  return {
+    ...state,
+    loops: [
+      {
+        ...loop,
+        timeoutIds: replay(loop.events)
+      }
+    ]
+  }
+};
+
+const startLoop = (state, {actions}) => () => {
+  const loops = state.loops.map((loop, index) => {
+    const {duration} = loop;
+    actions.playLoop(index);
+
+    const intervalId = setInterval(
+      () => actions.playLoop(index),
+      duration
+    );
+
+    return {
+      ...loop,
+      intervalId
+    }
+  });
+
+  return {
+    ...state,
+    loops
+  }
+};
+
+const stopRecording = (state, {actions}) => () => {
+  const {loop} = state;
+
+  const events = loop.events.map(({t, msg}) => (
+    {
+      t: t - loop.recordingStartTimestamp,
+      msg
+    }
+  ));
+
+  actions.startLoop();
+
+  return {
+    ...state,
+    recording: false,
+    loops: [
+      {
+        duration: Date.now() - loop.recordingStartTimestamp,
+        events
+      }
+    ]
+  }
+};
+
 class Brain {
   constructor(output) {
     this.output = output;
@@ -66,67 +136,23 @@ class Brain {
       loopTimeouts: []
     };
 
-    const bindAction = action => (...args) => this.state = action(this.state)(...args);
+    const bindAction = action => (...args) => setImmediate(
+      () =>
+        this.state = action(
+          this.state,
+          {
+            output: this.output,
+            actions: this.actions
+          }
+        )(...args)
+    );
 
     this.actions = {
       startRecording: bindAction(startRecording),
-      stopRecording: () => {
-        this.state.recording = false;
-        const {loop} = this.state;
-
-        const events = loop.events.map(({t, msg}) => (
-          {
-            t: t - loop.recordingStartTimestamp,
-            msg
-          }
-        ));
-
-        this.state.loops = [
-          {
-            duration: Date.now() - loop.recordingStartTimestamp,
-            events
-          }
-        ];
-
-        this.actions.startLoop()
-      },
+      stopRecording: bindAction(stopRecording),
       stopLoop: bindAction(stopLoop),
-      startLoop: () => {
-        const replay = (msgEvents) =>
-          msgEvents.map(
-            ({t, msg: {_type, ...msgParams}}) => setTimeout(
-              () => {
-                this.output.send(_type, msgParams);
-              },
-              t
-            )
-          );
-
-        const loops = this.state.loops.map((loop) => {
-          const {events, duration} = loop;
-          const timeoutIds = replay(events);
-
-          const intervalId = setInterval(
-            () => {
-              this.state.loops = [
-                {
-                  ...this.state.loops[0],
-                  timeoutIds: replay(events)
-                }
-              ];
-            },
-            duration
-          );
-
-          return {
-            ...loop,
-            timeoutIds,
-            intervalId
-          }
-        });
-
-        this.state.loops = loops;
-      },
+      playLoop: bindAction(playLoop),
+      startLoop: bindAction(startLoop),
       recordMessage: bindAction(recordMessage)
     };
   };
