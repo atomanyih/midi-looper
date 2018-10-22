@@ -1,11 +1,23 @@
 {
   "name": "midi-looper",
   "version": "1.0.0",
-  "main": "index.js",
   "author": "August Toman-Yih <august.toman.yih@gmail.com>",
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "easymidi": "^1.0.1"
+    "@babel/preset-react": "^7.0.0",
+    "easymidi": "^1.0.1",
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2",
+    "styled-components": "^4.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "electron": "^3.0.5",
+    "parcel-bundler": "^1.10.3"
+  },
+  "scripts": {
+    "start": "electron ui/electron/index.js",
+    "parcel:dev": "parcel ui/index.html"
   }
 }
