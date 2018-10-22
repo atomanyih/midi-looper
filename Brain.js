@@ -53,8 +53,6 @@ const recordMessage = state => msg => {
 };
 
 const playLoop = (state, {output}) => (loopIndex) => {
-  const loop = state.loops[loopIndex];
-
   const replay = (msgEvents) =>
     msgEvents.map(
       ({t, msg: {_type, ...msgParams}}) => setTimeout(
@@ -65,14 +63,20 @@ const playLoop = (state, {output}) => (loopIndex) => {
       )
     );
 
-  return {
-    ...state,
-    loops: [
-      {
+  const loops = state.loops.map((loop, index) => {
+    if(loopIndex === index) {
+      return {
         ...loop,
         timeoutIds: replay(loop.events)
       }
-    ]
+    }
+
+    return loop
+  });
+
+  return {
+    ...state,
+    loops
   }
 };
 
@@ -108,15 +112,18 @@ const stopRecording = (state, {actions}) => () => {
     }
   ));
 
+  actions.stopLoop();
   actions.startLoop();
 
   return {
     ...state,
     recording: false,
     loops: [
+      ...state.loops,
       {
         duration: Date.now() - loop.recordingStartTimestamp,
-        events
+        events,
+        timeoutIds: []
       }
     ]
   }
