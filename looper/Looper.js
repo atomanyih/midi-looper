@@ -129,8 +129,8 @@ const stopRecording = (state, {actions}) => () => {
   }
 };
 
-class Brain {
-  constructor(output) {
+class Looper {
+  constructor({output, onUpdate = () => {}}) {
     this.output = output;
 
     this.state = {
@@ -144,14 +144,19 @@ class Brain {
     };
 
     const bindAction = action => (...args) => setImmediate(
-      () =>
-        this.state = action(
+      () => {
+        const state = action(
           this.state,
           {
             output: this.output,
             actions: this.actions
           }
-        )(...args)
+        )(...args);
+
+        onUpdate(state);
+
+        return this.state = state;
+      }
     );
 
     this.actions = {
@@ -166,4 +171,4 @@ class Brain {
 }
 
 
-module.exports = Brain;
+module.exports = Looper;

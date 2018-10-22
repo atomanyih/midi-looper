@@ -17,7 +17,7 @@
     "parcel-bundler": "^1.10.3"
   },
   "scripts": {
-    "start": "electron ui/electron/index.js",
-    "parcel:dev": "parcel ui/index.html"
+    "start": "electron .",
+    "parcel:dev": "parcel ui/index.html --target=electron"
   }
 }
