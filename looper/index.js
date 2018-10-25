@@ -1,6 +1,6 @@
 const EasyMidi = require('easymidi');
 const Looper = require('./Looper');
-const controls = require('./Controls');
+const controls = require('./controls');
 
 const OUTPUT_NAME = 'MIDILOOP';
 

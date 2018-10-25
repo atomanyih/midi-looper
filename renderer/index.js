@@ -1,25 +1,43 @@
 import ReactDOM from 'react-dom';
 import React from 'react';
-var ipcRenderer = require('electron').ipcRenderer;
+import {ipcRenderer} from 'electron';
+
 
 class Listen extends React.Component {
-  state = {};
+  state = {
+    midiMessages: []
+  };
   componentDidMount() {
-    ipcRenderer.on('store-data', (event,store) => {
-      this.setState({store});
+    ipcRenderer.on('midi-msg', (event,msg) => {
+      let newArray = [...this.state.midiMessages, msg];
+      if(newArray.length > 200) {
+        newArray = newArray.slice(newArray.length - 200)
+      }
+      this.setState({
+        midiMessages: newArray
+      });
     });
   }
 
   render() {
+    const path = this.state.midiMessages
+      .map(({value}) => value)
+      .map((val, i) => `${i === 0 ? 'M' : 'L'} ${i} ${val}`).join(' ');
+
     return (
       <div>
-        {JSON.stringify(this.state)}
+        <svg viewBox='0 0 200 127' stroke='white' fill='none'>
+          <path d={path}/>
+        </svg>
+        {/*<div>*/}
+          {/*{JSON.stringify(this.state)}*/}
+        {/*</div>*/}
       </div>
     )
   }
 }
 
 ReactDOM.render(
-  <Listen>SUP</Listen>,
+  <Listen/>,
   document.querySelector('#root')
 )

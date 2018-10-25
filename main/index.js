@@ -1,7 +1,6 @@
 const { app, BrowserWindow } = require('electron')
+const controls = require('../looper/controls');
 
-const url = require('url');
-const path = require('path');
 
 function createWindow () {
   // Create the browser window.
@@ -10,8 +9,14 @@ function createWindow () {
 
   win.loadURL('http://localhost:8080')
 
-  setInterval(() => {win.webContents.send('store-data', 'hello');}, 2000)
-
+  controls({
+    outputName: '',
+    callbacks: {
+      onUnassigned: (msg) => {
+        win.webContents.send('midi-msg', msg)
+      }
+    }
+  });
 }
 
 app.on('ready', createWindow);
