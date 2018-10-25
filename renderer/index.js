@@ -1,8 +1,18 @@
 import ReactDOM from 'react-dom';
 import React from 'react';
 import {ipcRenderer} from 'electron';
+import groupBy from 'lodash/groupBy'
+import LoopGraph from "./LoopGraph";
 
-const colorFromChannel = channel => `hsl(${(channel * 20)%100}, 100%, 80%)`;
+// const groupBy = (xs, key) => {
+//   return xs.reduce((rv, x) => {
+//     (rv[x.msg[key]] = rv[x.msg[key]] || []).push(x);
+//     return rv;
+//   }, {});
+// };
+
+
+const colorFromChannel = channel => `hsl(${(channel * 20) % 100}, 100%, 80%)`;
 
 class MidiGraph extends React.Component {
   componentDidMount() {
@@ -35,42 +45,60 @@ class MidiGraph extends React.Component {
 }
 
 
-const MidiPath = ({messages, color}) => (
-  <path d={
-    messages
-      .map(({value}) => value)
-      .map((val, i) => `${i === 0 ? 'M' : 'L'} ${i} ${val}`).join(' ')
-  } stroke={color} fill='none'/>
-)
-
 class Listen extends React.Component {
   state = {
+    mainState: {
+      loops: []
+    }
   };
 
   componentDidMount() {
-    ipcRenderer.on('midi-msg', (event, msg) => {
-      const {channel} = msg;
-      const oldArray = this.state[channel] || [];
-      const newArray = [...oldArray, msg];
+    // ipcRenderer.on('midi-msg', (event, msg) => {
+    //   const {channel} = msg;
+    //   const oldArray = this.state[channel] || [];
+    //   const newArray = [...oldArray, msg];
+    //   this.setState({
+    //     [channel]: newArray
+    //   });
+    // });
+
+    ipcRenderer.on('state-update', (_, state) => {
       this.setState({
-        [channel]: newArray
-      });
-    });
+        mainState: state
+      })
+    })
   }
 
   render() {
+    const {mainState} = this.state
+    // this.state.mainState.loops.reduce()
+    // const loops = groupBy(this.state.mainState.loops || [], 'msg.channel');
+    // console.log(loops)
     return (
       <div>
         {/*<svg viewBox='0 0 200 127'>*/}
-          {/*{*/}
-            {/*Object.entries(this.state).map(([channel, messages]) => <MidiPath messages={messages} color={colorFromChannel(channel)}/>)*/}
-          {/*}*/}
+        {/*{*/}
+        {/*Object.entries(this.state).map(([channel, messages]) => <MidiPath messages={messages} color={colorFromChannel(channel)}/>)*/}
+        {/*}*/}
         {/*</svg>*/}
-        <MidiGraph {...{
-          messages: this.state
-        }}/>
+        {/*<MidiGraph {...{*/}
+        {/*messages: this.state*/}
+        {/*}}/>*/}
+
+        {/*{*/}
+          {/*loops.map(loop => (*/}
+            {/*<svg viewBox={`0 0 ${loop[loop.length-1].t} 127`}>*/}
+              {/*<MidiPath {...{*/}
+                {/*events: loop*/}
+              {/*}}/>*/}
+            {/*</svg>*/}
+          {/*))*/}
+        {/*}*/}
+        {
+          mainState.loops.map( loop => <div><LoopGraph loop={loop}/></div>)
+        }
         <div>
-          {JSON.stringify(this.state)}
+          {JSON.stringify(mainState.loops)}
         </div>
       </div>
     )

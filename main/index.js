@@ -1,5 +1,11 @@
 const { app, BrowserWindow } = require('electron')
+
+const EasyMidi = require('easymidi');
+const Looper = require('../looper/Looper');
 const controls = require('../looper/controls');
+
+const OUTPUT_NAME = 'MIDILOOP';
+
 
 
 function createWindow () {
@@ -9,14 +15,34 @@ function createWindow () {
 
   win.loadURL('http://localhost:8080')
 
+  const looper = new Looper({
+    output: new EasyMidi.Output(OUTPUT_NAME, true),
+    onUpdate: state => win.webContents.send('state-update', state)
+  });
+
   controls({
-    outputName: '',
+    outputName: OUTPUT_NAME,
     callbacks: {
-      onUnassigned: (msg) => {
-        win.webContents.send('midi-msg', msg)
-      }
+      onPressRecord: looper.actions.startRecording,
+      onReleaseRecord: looper.actions.stopRecording,
+      onPressStop: looper.actions.stopLoop,
+      onPressStart() {
+        looper.actions.stopLoop();
+        looper.actions.startLoop();
+      },
+      onUnassigned: looper.actions.recordMessage
     }
   });
+
+
+  // controls({
+  //   outputName: '',
+  //   callbacks: {
+  //     onUnassigned: (msg) => {
+  //       win.webContents.send('midi-msg', msg)
+  //     }
+  //   }
+  // });
 }
 
 app.on('ready', createWindow);
