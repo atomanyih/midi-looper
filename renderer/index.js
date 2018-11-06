@@ -99,7 +99,9 @@ class Listen extends React.Component {
           mainState.loops.map( loop => <div><LoopGraph loop={loop}/></div>)
         }
         <div>
-          {JSON.stringify(mainState.loops)}
+          <pre>
+          {JSON.stringify(mainState, null, 2)}
+          </pre>
         </div>
       </div>
     )
