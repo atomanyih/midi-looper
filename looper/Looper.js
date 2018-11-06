@@ -145,7 +145,12 @@ const stopRecording = (state, {actions}) => () => {
   const newState1 = addLoop(state)();
   const newState2 = clearLoopTimeouts(newState1)();
 
-  return startLoop(newState2, {actions})()
+  return startLoop(newState2, {actions})();
+};
+
+const restartLoop = (state, {actions}) => () => {
+  const newState1 = clearLoopTimeouts(state)();
+  return startLoop(newState1, {actions})();
 };
 
 class Looper {
@@ -184,7 +189,7 @@ class Looper {
       stopRecording: bindAction(stopRecording),
       stopLoop: bindAction(stopLoop),
       playLoop: bindAction(playLoop),
-      startLoop: bindAction(startLoop),
+      restartLoop: bindAction(restartLoop),
       recordMessage: bindAction(recordMessage)
     };
   };

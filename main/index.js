@@ -27,8 +27,7 @@ function createWindow () {
       onReleaseRecord: looper.actions.stopRecording,
       onPressStop: looper.actions.stopLoop,
       onPressStart() {
-        looper.actions.stopLoop();
-        looper.actions.startLoop();
+        looper.actions.restartLoop();
       },
       onUnassigned: looper.actions.recordMessage
     }
