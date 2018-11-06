@@ -1,6 +1,7 @@
 import React from "react";
 
 import styled from 'styled-components';
+import pathStringFromEvents from './pathStringFromEvents';
 
 const SvgBackground = styled.svg`
   background-color: rgb(255,255,255);
@@ -8,13 +9,9 @@ const SvgBackground = styled.svg`
 `;
 
 const MidiPath = ({events, color, ...props}) => {
-  const d = events
-    .map(({t, msg: {value}}) => [t, 127 - value])
-    .map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ')
+  const pathStrings = pathStringFromEvents(events);
 
-  return (
-    <path {...props} d={d} stroke={color} fill='none'/>
-  )
+  return pathStrings.map(d => <path {...props} d={d} stroke={color} fill='none'/>);
 };
 
 

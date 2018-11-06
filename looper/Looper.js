@@ -149,7 +149,10 @@ const stopRecording = (state, {actions}) => () => {
     addLoop,
     clearLoopTimeouts,
     startLoop
-  )(state, {actions})();
+  )({
+    ...state,
+    recording: false
+  }, {actions})();
 };
 
 const restartLoop = (state, {actions}) => () => {

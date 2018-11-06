@@ -100,7 +100,12 @@ class Listen extends React.Component {
         }
         <div>
           <pre>
-          {JSON.stringify(mainState, null, 2)}
+          {
+            JSON.stringify({
+              ...mainState,
+              loops: '[this is to long to be worth printing]'
+            }, null, 2)
+          }
           </pre>
         </div>
       </div>
