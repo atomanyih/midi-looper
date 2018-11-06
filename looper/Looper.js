@@ -1,3 +1,5 @@
+const flowAction = require('./flowAction');
+
 const startRecording = state => () => {
   return {
     ...state,
@@ -130,6 +132,7 @@ const addLoop = (state) => () => {
 
   return {
     ...state,
+    loop: null,
     loops: [
       ...state.loops,
       {
@@ -142,10 +145,11 @@ const addLoop = (state) => () => {
 };
 
 const stopRecording = (state, {actions}) => () => {
-  const newState1 = addLoop(state)();
-  const newState2 = clearLoopTimeouts(newState1)();
-
-  return startLoop(newState2, {actions})();
+  return flowAction(
+    addLoop,
+    clearLoopTimeouts,
+    startLoop
+  )(state, {actions})();
 };
 
 const restartLoop = (state, {actions}) => () => {

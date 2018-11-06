@@ -32,6 +32,10 @@
     "start": "run-p webpack electron",
     "webpack": "webpack-dev-server --mode development",
     "electron": "electron main/",
-    "electron:rebuild": "electron-rebuild"
+    "electron:rebuild": "electron-rebuild",
+    "test": "jest"
+  },
+  "jest": {
+    "transform": {}
   }
 }
