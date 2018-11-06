@@ -9,7 +9,7 @@ const SvgBackground = styled.svg`
 
 const MidiPath = ({events, color, ...props}) => {
   const d = events
-    .map(({t, msg: {value}}) => [t, value])
+    .map(({t, msg: {value}}) => [t, 127 - value])
     .map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ')
 
   return (
