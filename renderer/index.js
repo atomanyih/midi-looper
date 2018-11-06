@@ -76,6 +76,7 @@ class Listen extends React.Component {
     // console.log(loops)
     return (
       <div>
+        {mainState.playing ? 'yup' : 'nope'}
         {/*<svg viewBox='0 0 200 127'>*/}
         {/*{*/}
         {/*Object.entries(this.state).map(([channel, messages]) => <MidiPath messages={messages} color={colorFromChannel(channel)}/>)*/}

@@ -49,7 +49,7 @@ const controls = ({
   EasyMidi.getInputs().forEach(inputName => {
     const input = new EasyMidi.Input(inputName);
     input.on('message', msg => {
-      console.log(`${inputName} - ${msgToString(msg)}`);
+//      console.log(`${inputName} - ${msgToString(msg)}`);
       if (inputName !== outputName) {
         handleMessage(msg);
       }

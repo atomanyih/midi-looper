@@ -9,7 +9,7 @@ const startRecording = state => () => {
   }
 };
 
-const stopLoop = state => () => {
+const clearLoopTimeouts = state => () => {
   const loops = state.loops.map((loop) => {
     clearInterval(loop.intervalId);
 
@@ -26,7 +26,22 @@ const stopLoop = state => () => {
 
   return {
     ...state,
-    loops
+    loops,
+  }
+};
+
+const stopLoop = state => () => {
+  if(!state.playing) {
+    return {
+      ...state,
+      loops: []
+    }
+  }
+
+  return {
+    ...state,
+    ...clearLoopTimeouts(state)(),
+    playing: false
   }
 };
 
@@ -76,7 +91,8 @@ const playLoop = (state, {output}) => (loopIndex) => {
 
   return {
     ...state,
-    loops
+    loops,
+    playing: true
   }
 };
 
@@ -102,7 +118,7 @@ const startLoop = (state, {actions}) => () => {
   }
 };
 
-const stopRecording = (state, {actions}) => () => {
+const addLoop = (state) => () => {
   const {loop} = state;
 
   const events = loop.events.map(({t, msg}) => (
@@ -112,12 +128,8 @@ const stopRecording = (state, {actions}) => () => {
     }
   ));
 
-  actions.stopLoop();
-  actions.startLoop();
-
   return {
     ...state,
-    recording: false,
     loops: [
       ...state.loops,
       {
@@ -129,11 +141,19 @@ const stopRecording = (state, {actions}) => () => {
   }
 };
 
+const stopRecording = (state, {actions}) => () => {
+  const newState1 = addLoop(state)();
+  const newState2 = clearLoopTimeouts(newState1)();
+
+  return startLoop(newState2, {actions})()
+};
+
 class Looper {
   constructor({output, onUpdate = () => {}}) {
     this.output = output;
 
     this.state = {
+      playing: false,
       recording: false,
       recordingStartTimestamp: null,
       recordingStopTimestamp: null,
